@@ -1,3 +1,8 @@
+# Copyright (c) 2016, Henrique Miranda
+# All rights reserved.
+#
+# This file is part of the yambopy project
+#
 from netCDF4 import Dataset
 from math import sqrt
 import numpy as np
