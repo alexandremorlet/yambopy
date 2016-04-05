@@ -59,7 +59,7 @@ class YamboOut():
         else:
             logdir = outdir
 
-        self.output = ["%s"%f for f in outdir if f[:2] == 'o-' and ('refl' in f or 'eel' in f or 'eps' in f or 'qp' in f or 'sf' in f)]
+        self.output = ["%s"%f for f in outdir if f[:2] == 'o-' and ('refl' in f or 'eel' in f or 'eps' in f or 'qp' in f or 'sf' in f) and 'xsf' not in f]
         self.run    = ["%s"%f for f in outdir if f[:2] == 'r-']
         self.logs   = ["/LOG/%s"%f for f in logdir]
         self.get_runtime()
@@ -96,6 +96,7 @@ class YamboOut():
         """ Get the data from the o-* files
         """
         #open all the o-* files
+        print self.output
         files = [open("%s/%s"%(self.folder,f)) for f in self.output]
 
         self.data = {}
@@ -124,8 +125,8 @@ class YamboOut():
                     # of the section after the tag 'Input file:'
                     inputfile.append( line[4:] )
         f.close()
-       
-        #use YamboIn to read the input file to a list 
+
+        #use YamboIn to read the input file to a list
         yi = YamboIn()
         self.inputfile = yi.read_string( ''.join(inputfile) )
 
@@ -180,7 +181,7 @@ class YamboOut():
                    "runtime"  : self.runtime,
                    "inputfile": self.inputfile,
                    "lattice"  : self.lat.tolist(),
-                   "alat"     : self.alat.tolist(), 
+                   "alat"     : self.alat.tolist(),
                    "kpts_iku" : self.kpts_iku.tolist(),
                    "sym_car"  : self.sym_car.tolist(),
                    "atompos"  : self.apos.tolist(),

@@ -5,14 +5,20 @@
 #
 from yambopy import *
 from ase import Atoms
-import matplotlib.pyplot as plt
+#we try to use matplotlib, if not present we won't use it
+try:
+    from matplotlib import pyplot as plt
+except ImportError:
+    _has_matplotlib = False
+else:
+    _has_matplotlib = True
 import json
 import numpy as np
 import os
 
-class AbsorptionSpectra():
+class YamboBSEAbsorptionSpectra():
     def __init__(self,job_string,threshold=0.2):
-        """ From a database of excitons 
+        """ From a database of excitons
         """
         self.job_string = job_string
         self.threshold = threshold
@@ -59,7 +65,7 @@ class AbsorptionSpectra():
                 os.system("ypp -F ypp_%d.in -J %s"%(i,self.job_string))
 
             #read the excitonic wavefunction
-            ew = ExcitonWaveFunction()
+            ew = YamboExcitonWaveFunction()
             ew.read_file(filename)
             data = ew.get_data()
             for word in keywords:

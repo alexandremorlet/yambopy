@@ -5,7 +5,13 @@
 #
 from yambopy import *
 from itertools import product
-import matplotlib.pyplot as plt
+#we try to use matplotlib, if not present we won't use it
+try:
+    from matplotlib import pyplot as plt
+except ImportError:
+    _has_matplotlib = False
+else:
+    _has_matplotlib = True
 import json
 import numpy as np
 
@@ -21,7 +27,7 @@ def jump_to(f,tag):
 def v2str(v):
     return ("%12.8lf "*len(v))%tuple(v)
 
-class ExcitonWaveFunction():
+class YamboExcitonWaveFunction():
     """ Class to read excitonic wavefunctions from yambo in the 3D xsf format
     """
     def __init__(self):
@@ -105,13 +111,38 @@ class ExcitonWaveFunction():
         f.write('END_DATAGRID_3D\n')
         f.write('END_BLOCK_DATAGRID_3D\n')
         f.close()
-    
+
+    def center(self):
+        """ Center the atoms and excitonic wavefunction in the unit cell
+        """
+        self.norm = [0,0,0]
+        for i in range(3):
+            self.norm[i] = np.linalg.norm(self.lattice[i])
+
+        print self.norm
+        print self.nx, self.ny, self.nz
+
+        # find the average position in each direction (geometric center)
+        pos = np.zeros([3])
+        for atom in self.atoms:
+            pos += atom[1:]
+        pos = pos/len(self.atoms)
+
+        # center the atoms around that position using the center of the unit cell
+        displecement = pos
+        for atom in self.atoms:
+            x,y,z = atompos + atom[1:]
+            atom[1:] = np.array([x%self.nx, y%self.ny, z%self.nz])
+
+        # center the wavefunction around that position
+        new_data = np.zeros(data.shape)
+
     def get_data(self):
         return { "datagrid": self.datagrid.flatten().tolist(),
                  "lattice": self.lattice,
                  "atoms": self.atoms,
                  "atypes": self.atypes,
-                 "hole": hole,
+                 "hole": self.hole,
                  "nx": self.nx,
                  "ny": self.ny,
                  "nz": self.nz }
@@ -128,12 +159,12 @@ class ExcitonWaveFunction():
         data = json.load(f)
         f.close()
 
-        self.read_json(data)        
+        self.read_json(data)
 
     def read_json(self,data):
         """ Write as a json file
         """
-        self.datagrid = data["datagrid"] 
+        self.datagrid = data["datagrid"]
         self.lattice = data["lattice"]
         self.atoms = data["atoms"]
         self.atypes = data["atypes"]
