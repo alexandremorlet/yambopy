@@ -74,7 +74,7 @@ class YamboBSEAbsorptionSpectra():
                                           "intensity": intensity,
                                           "hole": data["hole"],
                                           "index": i,
-                                          "datagrid": data["datagrid"]})
+                                          "datagrid": np.array(data["datagrid"])})
 
     def get_atoms(self):
         """ Get a ase atoms class
@@ -91,7 +91,5 @@ class YamboBSEAbsorptionSpectra():
         """ Write a jsonfile with the absorption spectra and the wavefunctions of certain excitons
         """
         print "writing json file...",
-        f = open("absorptionspectra.json","w")
-        json.dump(self.data,f)
-        f.close()
+        JsonDumper(self.data,"absorptionspectra.json")
         print "done!"

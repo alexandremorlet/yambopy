@@ -4,8 +4,7 @@
 # This file is part of yambopy
 #
 #
-from subprocess import Popen, PIPE
-from yambopy.inputfile import YamboIn
+from yambopy import *
 from copy import *
 try:
     from netCDF4 import Dataset
@@ -13,7 +12,6 @@ try:
 except ImportError:
     _has_netcdf = False
 import os
-import json
 import numpy as np
 import re
 
@@ -24,17 +22,6 @@ except ImportError:
     _has_matplotlib = False
 else:
     _has_matplotlib = True
-
-def pack_files_in_folder(folder,save_folder=None):
-    """ Helper funciton to look for output files in a
-    """
-    if not save_folder: save_folder = folder
-    #pack the files in .json files
-    for dirpath,dirnames,filenames in os.walk(folder):
-        #check if there are some output files in the folder
-        if ([ f for f in filenames if 'o-' in f ]):
-            y = YamboOut(dirpath,save_folder=save_folder)
-            y.pack()
 
 class YamboOut():
     """ Class to read yambo output files and pack them in a JSON file
@@ -175,19 +162,18 @@ class YamboOut():
         #if no filename is specified we use the same name as the folder
         if not filename: filename = self.folder
 
-        f = open('%s.json'%filename,'w')
-        json.dump({"data"     : dict(zip(self.data.keys(),[d.tolist() for d in self.data.values()])),
-                   "tags"     : self.tags,
-                   "runtime"  : self.runtime,
-                   "inputfile": self.inputfile,
-                   "lattice"  : self.lat.tolist(),
-                   "alat"     : self.alat.tolist(),
-                   "kpts_iku" : self.kpts_iku.tolist(),
-                   "sym_car"  : self.sym_car.tolist(),
-                   "atompos"  : self.apos.tolist(),
-                   "atomtype" : self.atomic_number.tolist()},
-                   f,indent=5)
-        f.close()
+        jsondata = {"data"     : dict(zip(self.data.keys(),[d.tolist() for d in self.data.values()])),
+                    "tags"     : self.tags,
+                    "runtime"  : self.runtime,
+                    "inputfile": self.inputfile,
+                    "lattice"  : self.lat,
+                    "alat"     : self.alat,
+                    "kpts_iku" : self.kpts_iku,
+                    "sym_car"  : self.sym_car,
+                    "atompos"  : self.apos,
+                    "atomtype" : self.atomic_number}
+        filename = '%s.json'%filename
+        JsonDumper(jsondata,filename)
 
     def __str__(self):
         s = ""

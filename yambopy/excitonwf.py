@@ -150,10 +150,8 @@ class YamboExcitonWaveFunction():
     def write_json(self):
         """ Write as a json file
         """
-        f = open("datagrid.json","w")
-        json.dump(self.get_data(),f)
-        f.close()
-
+        JsonDumper(self.get_data(),"datagrid.json")
+        
     def read_json_file(self,filename):
         f = open(filename,"r")
         data = json.load(f)
