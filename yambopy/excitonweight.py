@@ -74,7 +74,7 @@ class YamboExcitonWeight():
         f.close()
 
     def calc_kpts_weights(self):
-        """ calculate the weights and kpoints of the excitons
+        """ Calculate the weights and kpoints of the excitons
         """
         self.weights = dict()
 

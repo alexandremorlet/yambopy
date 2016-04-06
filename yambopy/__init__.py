@@ -11,5 +11,5 @@ from yambopy.outputfile import *
 from yambopy.analyse import *
 from yambopy.recipes import *
 from yambopy.excitonwf import *
-from yambopy.bse_absorption import *
 from yambopy.excitonweight import *
+from yambopy.bse_absorption import *

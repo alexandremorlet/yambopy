@@ -17,9 +17,9 @@ import numpy as np
 import os
 
 class YamboBSEAbsorptionSpectra():
+    """ Create a file with information about the excitons from Yambo files
+    """
     def __init__(self,job_string,threshold=0.2):
-        """ From a database of excitons
-        """
         self.job_string = job_string
         self.threshold = threshold
         self.data = {"excitons":[]}
@@ -27,10 +27,12 @@ class YamboBSEAbsorptionSpectra():
 
         #use YamboOut to read the absorption spectra
         y = YamboOut('.')
-        print y
-        for key,value in y.data.items():
-            if "eps" in key: self.data["eps"] = value.tolist()
-            if "eel" in key: self.data["eel"] = value.tolist()
+        # we obtain all the bse spectra
+        absorptionspectra = y.get_data(('eps','diago'))
+        #we just use one of them
+        key = list(absorptionspectra)[0]
+        for key,value in absorptionspectra[key].items():
+            self.data[key] = value
 
     def get_excitons(self):
         """ Obtain the excitons using ypp
@@ -47,31 +49,60 @@ class YamboBSEAbsorptionSpectra():
         self.filtered_excitons = self.excitons[self.excitons[:,1]>self.threshold]
         self.filtered_excitons
 
-        #read the ypp file using YamboIn
-        ypp = YamboIn()
-        ypp.read_file("ypp.in")
+        #create a ypp file using YamboIn for reading the wavefunction
+        yppwf = YamboIn('ypp -e w',filename='ypp.in')
+        yppwf['Format'] = "x"
+        yppwf['Direction'] = "123"
+
+        #create a ypp file using YamboIn for reading the excitonic weights
+        yppew = YamboIn('ypp -e a',filename='ypp.in')
+        yppew['MinWeight'] = 1e-4
 
         keywords = ["lattice", "atoms", "atypes", "nx", "ny", "nz"]
         for exciton in self.filtered_excitons:
             #get info
             e,intensity,i = exciton
 
-            #create ypp input file and run
-            ypp["States"] = "%d - %d"%(i,i)
-            ypp.write("ypp_%d.in"%i)
+            ##############################################################
+            # Excitonic Wavefunction
+            ##############################################################
+            #create ypp input for the wavefunction file and run
+            yppwf["States"] = "%d - %d"%(i,i)
+            yppwf.write("yppwf_%d.in"%i)
+
             filename = "o-%s.exc_3d_%d.xsf"%(self.job_string,i)
-            print filename
             if not os.path.isfile(filename):
-                os.system("ypp -F ypp_%d.in -J %s"%(i,self.job_string))
+                os.system("ypp -F yppwf_%d.in -J %s"%(i,self.job_string))
 
             #read the excitonic wavefunction
-            ew = YamboExcitonWaveFunction()
-            ew.read_file(filename)
-            data = ew.get_data()
+            ewf = YamboExcitonWaveFunction()
+            ewf.read_file(filename)
+            data = ewf.get_data()
             for word in keywords:
                 self.data[word] = data[word]
+
+            ##############################################################
+            # Excitonic Amplitudes
+            ##############################################################
+            #create ypp input for the amplitudes file and run
+            yppew["States"] = "%d - %d"%(i,i)
+            yppew.write("yppew_%d.in"%i)
+
+            filename = "o-%s.exc_weights_at_%d"%(self.job_string,i)
+            if not os.path.isfile(filename):
+                os.system("ypp -F yppew_%d.in -J %s"%(i,self.job_string))
+
+            #read the excitonic wavefunction
+            ew = YamboExcitonWeight(filename)
+            qpts, weights = ew.calc_kpts_weights()
+
+            ############
+            # Save data
+            ############
             self.data["excitons"].append({"energy": e,
                                           "intensity": intensity,
+                                          "weights": weights,
+                                          "qpts": qpts,
                                           "hole": data["hole"],
                                           "index": i,
                                           "datagrid": np.array(data["datagrid"])})

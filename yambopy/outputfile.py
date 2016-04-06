@@ -135,10 +135,19 @@ class YamboOut():
         self.runtime = timing
         return timing
 
+    def get_data(self,tags):
+        """ Search for a tag in the output files and obtain the data
+        """
+        data = {}
+        for key in self.data.keys():
+            print key
+            if all(tag in key for tag in tags):
+                data[key] = dict(zip(self.tags[key],np.array(self.data[key]).T))
+        return data
+
     def plot(self,tag,cols=(2,),xlabel=None):
         """ Search in the output files a certain tag and plot it
         """
-        if 'self.data' not in locals(): self.get_data()
         for key in self.data.keys():
             if tag in key:
                 data = self.data[key]
