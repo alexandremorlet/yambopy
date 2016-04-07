@@ -73,7 +73,14 @@ class YamboExcitonWeight():
             f.write(("%12.8lf "*3)%tuple(q)+"\n")
         f.close()
 
-    def calc_kpts_weights(self):
+    def get_data(self):
+        qpts, weights = self.calc_kpts_weights()
+        return { "qpts": qpts,
+                 "weights": weights,
+                 "lattice": self.lat,
+                 "reciprocal_lattice": self.rlat }
+
+    def calc_kpts_weights(self,repx=range(3),repy=range(3),repz=range(3)):
         """ Calculate the weights and kpoints of the excitons
         """
         self.weights = dict()
@@ -94,7 +101,7 @@ class YamboExcitonWeight():
 
         qpts = []
         weights = []
-        for r in product(xrange(3),repeat=3):
+        for r in product(repx,repy,repz):
             for k,s in self.weights.keys():
                 w   = self.weights[(k,s)]
                 weights.append( w )
@@ -116,13 +123,16 @@ class YamboExcitonWeight():
         plt.contourf(X, Y, Z, cmap='gist_heat_r')
         plt.show()
 
-    def plot_weights(self):
+    def plot_weights(self,size=20):
         """ Plot the weights in a scatter plot of this exciton
         """
         cmap = plt.get_cmap("gist_heat_r")
 
+        fig = plt.figure(figsize=(20,20))
+        plt.rc('text', usetex=True)
+        plt.rc('font', family='serif',serif="Computer Modern Roman",size=20)
         kpts, weights = self.calc_kpts_weights()
-        plt.scatter(kpts[:,0], kpts[:,1], s=50, marker='H', color=[cmap(sqrt(c)) for c in weights])
+        plt.scatter(kpts[:,0], kpts[:,1], s=size, marker='H', color=[cmap(sqrt(c)) for c in weights])
         plt.axes().set_aspect('equal', 'datalim')
         plt.show()
 

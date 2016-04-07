@@ -4,7 +4,11 @@
 # This file is part of the yambopy project
 #
 from yambopy import *
-from ase import Atoms
+try:
+    from ase import Atoms
+except:
+    _has_ase = False
+
 #we try to use matplotlib, if not present we won't use it
 try:
     from matplotlib import pyplot as plt
@@ -19,11 +23,11 @@ import os
 class YamboBSEAbsorptionSpectra():
     """ Create a file with information about the excitons from Yambo files
     """
-    def __init__(self,job_string,threshold=0.2):
+    def __init__(self,job_string):
         self.job_string = job_string
-        self.threshold = threshold
         self.data = {"excitons":[]}
         self.atoms = None
+        self.excitons = None
 
         #use YamboOut to read the absorption spectra
         y = YamboOut('.')
@@ -34,32 +38,53 @@ class YamboBSEAbsorptionSpectra():
         for key,value in absorptionspectra[key].items():
             self.data[key] = value
 
-    def get_excitons(self):
+    def get_excitons(self,min_intensity=0.1,max_energy=4,Degen_Step=0.0100):
         """ Obtain the excitons using ypp
         """
-        filename = "o-%s.exc_I_sorted"%self.job_string
+        filename = "o-%s.exc_E_sorted"%self.job_string
         if not os.path.isfile(filename):
             os.system("ypp -e s -J %s"%self.job_string)
         self.excitons = np.loadtxt(filename)
-        return self.excitons[self.excitons[:,1]>self.threshold]
 
-    def get_wavefunctions(self):
+        #filter with degen
+        if Degen_Step:
+            new_excitons = []
+            prev_exc = 0
+            for exc in self.excitons:
+                e,i,index = exc
+                if abs(e-prev_exc)>Degen_Step:
+                    new_excitons.append(exc)
+                prev_exc = e
+            self.excitons = np.array(new_excitons)
+
+        #filter with energy
+        self.excitons = self.excitons[self.excitons[:,0]<max_energy]
+
+        #filter with intensity
+        self.excitons = self.excitons[self.excitons[:,1]>min_intensity]
+
+        return self.excitons
+
+    def get_wavefunctions(self,FFTGvecs=30,Degen_Step=0.0100,repx=range(3),repy=range(3),repz=range(3)):
         """ Collect all the wavefuncitons with an intensity larger than self.threshold
         """
-        self.filtered_excitons = self.excitons[self.excitons[:,1]>self.threshold]
-        self.filtered_excitons
+        if self.excitons is None:
+            print "Excitons not present use get_exitons() first"
+            exit()
 
         #create a ypp file using YamboIn for reading the wavefunction
         yppwf = YamboIn('ypp -e w',filename='ypp.in')
         yppwf['Format'] = "x"
         yppwf['Direction'] = "123"
+        yppwf['FFTGvecs'] = FFTGvecs
+        yppwf['Degen_Step'] = Degen_Step
 
         #create a ypp file using YamboIn for reading the excitonic weights
         yppew = YamboIn('ypp -e a',filename='ypp.in')
-        yppew['MinWeight'] = 1e-4
+        yppew['MinWeight'] = 1e-6
 
         keywords = ["lattice", "atoms", "atypes", "nx", "ny", "nz"]
-        for exciton in self.filtered_excitons:
+        for exciton in self.excitons:
             #get info
             e,intensity,i = exciton
 
@@ -94,7 +119,7 @@ class YamboBSEAbsorptionSpectra():
 
             #read the excitonic wavefunction
             ew = YamboExcitonWeight(filename)
-            qpts, weights = ew.calc_kpts_weights()
+            qpts, weights = ew.calc_kpts_weights(repx=repx,repy=repy,repz=repz)
 
             ############
             # Save data
