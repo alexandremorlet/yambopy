@@ -6,22 +6,10 @@
 #
 from yambopy import *
 from copy import *
-try:
-    from netCDF4 import Dataset
-    _has_netcdf = True
-except ImportError:
-    _has_netcdf = False
 import os
-import numpy as np
 import re
-
-#we try to use matplotlib, if not present we won't use it
-try:
-    from matplotlib import pyplot as plt
-except ImportError:
-    _has_matplotlib = False
-else:
-    _has_matplotlib = True
+from yambopy.netcdf import *
+from yambopy.plot import *
 
 class YamboOut():
     """ Class to read yambo output files and pack them in a JSON file

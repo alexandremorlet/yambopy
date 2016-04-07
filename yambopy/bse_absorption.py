@@ -9,7 +9,7 @@ try:
 except:
     _has_ase = False
 
-from yambopy.plot import *
+from yambopy.plot  import *
 import os
 
 class YamboBSEAbsorptionSpectra():
@@ -57,7 +57,7 @@ class YamboBSEAbsorptionSpectra():
 
         return self.excitons
 
-    def get_wavefunctions(self,FFTGvecs=30,Degen_Step=0.0100,repx=range(3),repy=range(3),repz=range(3)):
+    def get_wavefunctions(self,FFTGvecs=30,Degen_Step=0.0100,repx=range(3),repy=range(3),repz=range(3),wf=False):
         """ Collect all the wavefuncitons with an intensity larger than self.threshold
         """
         if self.excitons is None:
@@ -74,29 +74,31 @@ class YamboBSEAbsorptionSpectra():
         #create a ypp file using YamboIn for reading the excitonic weights
         yppew = YamboIn('ypp -e a',filename='ypp.in')
         yppew['MinWeight'] = 1e-6
+        yppew['Degen_Step'] = Degen_Step
 
         keywords = ["lattice", "atoms", "atypes", "nx", "ny", "nz"]
         for exciton in self.excitons:
             #get info
             e,intensity,i = exciton
 
-            ##############################################################
-            # Excitonic Wavefunction
-            ##############################################################
-            #create ypp input for the wavefunction file and run
-            yppwf["States"] = "%d - %d"%(i,i)
-            yppwf.write("yppwf_%d.in"%i)
+            if wf:
+                ##############################################################
+                # Excitonic Wavefunction
+                ##############################################################
+                #create ypp input for the wavefunction file and run
+                yppwf["States"] = "%d - %d"%(i,i)
+                yppwf.write("yppwf_%d.in"%i)
 
-            filename = "o-%s.exc_3d_%d.xsf"%(self.job_string,i)
-            if not os.path.isfile(filename):
-                os.system("ypp -F yppwf_%d.in -J %s"%(i,self.job_string))
+                filename = "o-%s.exc_3d_%d.xsf"%(self.job_string,i)
+                if not os.path.isfile(filename):
+                    os.system("ypp -F yppwf_%d.in -J %s"%(i,self.job_string))
 
-            #read the excitonic wavefunction
-            ewf = YamboExcitonWaveFunction()
-            ewf.read_file(filename)
-            data = ewf.get_data()
-            for word in keywords:
-                self.data[word] = data[word]
+                #read the excitonic wavefunction
+                ewf = YamboExcitonWaveFunction()
+                ewf.read_file(filename)
+                data = ewf.get_data()
+                for word in keywords:
+                    self.data[word] = data[word]
 
             ##############################################################
             # Excitonic Amplitudes
@@ -116,13 +118,17 @@ class YamboBSEAbsorptionSpectra():
             ############
             # Save data
             ############
-            self.data["excitons"].append({"energy": e,
-                                          "intensity": intensity,
-                                          "weights": weights,
-                                          "qpts": qpts,
-                                          "hole": data["hole"],
-                                          "index": i,
-                                          "datagrid": np.array(data["datagrid"])})
+            exciton = {"energy": e,
+                       "intensity": intensity,
+                       "weights": weights,
+                       "qpts": qpts,
+                       "index": i}
+            if wf:
+                exciton["hole"] = data["hole"]
+                exciton["datagrid"] = np.array(data["datagrid"])
+
+            self.data["excitons"].append(exciton)
+
 
     def get_atoms(self):
         """ Get a ase atoms class
