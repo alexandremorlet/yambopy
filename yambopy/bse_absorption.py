@@ -4,20 +4,20 @@
 # This file is part of the yambopy project
 #
 from yambopy import *
-try:
-    from ase import Atoms
-except:
-    _has_ase = False
-
 from yambopy.plot  import *
 import os
 
-class YamboBSEAbsorptionSpectra():
+class YamboBSEAbsorptionSpectra(YamboSaveDB):
     """ Create a file with information about the excitons from Yambo files
     """
-    def __init__(self,job_string):
+    def __init__(self,job_string,save='SAVE'):
+        YamboSaveDB.__init__(self,save=save)
         self.job_string = job_string
-        self.data = {"excitons":[]}
+        self.data = {"excitons":[],
+                     "lattice": self.lat,
+                     "atypes": self.atomic_numbers,
+                     "atoms": self.atomic_positions}
+
         self.atoms = None
         self.excitons = None
 
@@ -128,18 +128,6 @@ class YamboBSEAbsorptionSpectra():
                 exciton["datagrid"] = np.array(data["datagrid"])
 
             self.data["excitons"].append(exciton)
-
-
-    def get_atoms(self):
-        """ Get a ase atoms class
-        """
-        if "lattice" in self.data.keys():
-            self.atypes = self.data["atypes"]
-            self.lat = self.data["lattice"]
-            self.atom_types = [self.atypes[a[0]] for a in self.data["atoms"]]
-            self.pos = [a[1:] for a in self.data["atoms"]]
-            self.atoms = Atoms(self.atom_types, self.pos, pbc=[1,1,1])
-            self.atoms.set_cell(self.lat)
 
     def write_json(self):
         """ Write a jsonfile with the absorption spectra and the wavefunctions of certain excitons

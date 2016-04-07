@@ -8,7 +8,12 @@ from yambopy import *
 from copy import *
 import os
 import re
-from yambopy.netcdf import *
+try:
+    from netCDF4 import Dataset
+    _has_netcdf = True
+except ImportError:
+    _has_netcdf = False
+
 from yambopy.plot import *
 
 class YamboOut():
