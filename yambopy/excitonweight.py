@@ -4,18 +4,7 @@
 # This file is part of the yambopy project
 #
 from yambopy import *
-import numpy as np
-from numpy.linalg import norm, inv
-from netCDF4 import Dataset
-from math import sqrt
-#we try to use matplotlib, if not present we won't use it
-try:
-    from matplotlib import pyplot as plt
-    from matplotlib.mlab import griddata
-except ImportError:
-    _has_matplotlib = False
-else:
-    _has_matplotlib = True
+from yambopy.netcdf import *
 from itertools import product
 
 class YamboExcitonWeight():
@@ -38,6 +27,7 @@ class YamboExcitonWeight():
         self.kpts_car = np.array([ k/self.alat for k in self.kpts_iku ])
 
         #convert cartesian transformations to reduced transformations
+        inv = np.linalg.inv
         self.sym_rlu = np.zeros([self.nsym,3,3])
         for n,s in enumerate(self.sym_car):
             a = np.dot(s.T,inv(self.rlat))

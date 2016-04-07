@@ -9,15 +9,7 @@ try:
 except:
     _has_ase = False
 
-#we try to use matplotlib, if not present we won't use it
-try:
-    from matplotlib import pyplot as plt
-except ImportError:
-    _has_matplotlib = False
-else:
-    _has_matplotlib = True
-import json
-import numpy as np
+from yambopy.plot import *
 import os
 
 class YamboBSEAbsorptionSpectra():

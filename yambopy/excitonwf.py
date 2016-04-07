@@ -5,15 +5,7 @@
 #
 from yambopy import *
 from itertools import product
-#we try to use matplotlib, if not present we won't use it
-try:
-    from matplotlib import pyplot as plt
-except ImportError:
-    _has_matplotlib = False
-else:
-    _has_matplotlib = True
-import json
-import numpy as np
+from yambopy.plot import *
 
 def red_car(red,lat): return np.array(map( lambda coord: coord[0]*lat[0]+coord[1]*lat[1]+coord[2]*lat[2], red))
 
@@ -151,7 +143,7 @@ class YamboExcitonWaveFunction():
         """ Write as a json file
         """
         JsonDumper(self.get_data(),"datagrid.json")
-        
+
     def read_json_file(self,filename):
         f = open(filename,"r")
         data = json.load(f)
