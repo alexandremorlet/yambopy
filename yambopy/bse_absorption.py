@@ -57,7 +57,7 @@ class YamboBSEAbsorptionSpectra(YamboSaveDB):
 
         return self.excitons
 
-    def get_wavefunctions(self,FFTGvecs=30,Degen_Step=0.0100,repx=range(3),repy=range(3),repz=range(3),wf=False):
+    def get_wavefunctions(self,FFTGvecs=30,Direction="123",Format="x",Degen_Step=0.0100,repx=range(3),repy=range(3),repz=range(3),wf=False):
         """ Collect all the wavefuncitons with an intensity larger than self.threshold
         """
         if self.excitons is None:
@@ -66,8 +66,8 @@ class YamboBSEAbsorptionSpectra(YamboSaveDB):
 
         #create a ypp file using YamboIn for reading the wavefunction
         yppwf = YamboIn('ypp -e w',filename='ypp.in')
-        yppwf['Format'] = "x"
-        yppwf['Direction'] = "123"
+        yppwf['Format'] = Formnat
+        yppwf['Direction'] = Direction
         yppwf['FFTGvecs'] = FFTGvecs
         yppwf['Degen_Step'] = Degen_Step
 

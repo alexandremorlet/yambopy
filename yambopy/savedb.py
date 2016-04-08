@@ -74,21 +74,26 @@ class YamboSaveDB():
         for n,s in enumerate(self.sym_car):
             self.sym_rec[n] = inv(s).T
 
-    def expand_kpts(self):
+    def expand_kpts(self,repx=range(3),repy=range(3),repz=range(3)):
         """ Take a list of qpoints and symmetry operations and return the full brillouin zone
         with the corresponding index in the irreducible brillouin zone
         """
         kpoints_indexes = []
         kpoints_full    = []
-        print "nkpoints:", len(self.kpts_car)
+
+        #expand using symmetries
         for nk,k in enumerate(self.kpts_car):
-            for sym in self.sym_car:
-                kpoints_full.append(np.dot(sym,k))
-                kpoints_indexes.append(nk)
+            for r in product(repx,repy,repz):
+                d = red_car([r],self.rlat)[0]
+                for sym in self.sym_car:
+                    kpoints_full.append(np.dot(sym,k)+d)
+                    kpoints_indexes.append(nk)
+
+        print kpoints_full[:5]
 
         return np.array(kpoints_full), np.array(kpoints_indexes)
 
-    def plot_bs(self,size=20,bandc=1,bandv=None,expand=True):
+    def plot_bs(self,size=20,bandc=1,bandv=None,expand=True,repx=range(3),repy=range(3),repz=range(3)):
         """ Plot the weights in a scatter plot of this exciton
         """
         if bandv is None: bandv = self.nbandsv
@@ -103,17 +108,16 @@ class YamboSaveDB():
         weights = weights/max(weights)
 
         if expand:
-            kpts, nks = self.expand_kpts()
+            kpts, nks = self.expand_kpts(repx=repx,repy=repy,repz=repz)
             weights = weights[nks]
         else:
             kpts = self.kpts_car
 
-
         fig = plt.figure(figsize=(10,10))
         plt.rc('text', usetex=True)
         plt.rc('font', family='serif',serif="Computer Modern Roman",size=20)
-        for r in product(range(3),repeat=3):
-            d = red_car([r],self.rlat)[0]
-            plt.scatter(kpts[:,0]+d[0], kpts[:,1]+d[1], s=size, marker='H', color=[cmap(c) for c in weights])
+        #for r in product(range(3),repeat=3):
+        #        d = red_car([r],self.rlat)[0]
+        plt.scatter(kpts[:,0], kpts[:,1], s=size, marker='H', color=[cmap(c) for c in weights])
         plt.axes().set_aspect('equal', 'datalim')
         plt.show()
