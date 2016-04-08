@@ -7,7 +7,7 @@ from yambopy import *
 from yambopy.plot  import *
 import os
 
-class YamboBSEAbsorptionSpectra(YamboSaveDB):
+class YamboBSEAbsorptionSpectraXSF(YamboSaveDB):
     """ Create a file with information about the excitons from Yambo files
     """
     def __init__(self,job_string,save='SAVE'):
@@ -70,8 +70,8 @@ class YamboBSEAbsorptionSpectra(YamboSaveDB):
         yppwf['Direction'] = Direction
         yppwf['FFTGvecs'] = FFTGvecs
         yppwf['Degen_Step'] = Degen_Step
-        yppwf['Hole'] = Hole
-        yppwf['Cells'] = Cells
+        yppwf['Hole'] = [Hole,'']
+        yppwf['Cells'] = [Cells,'']
 
         #create a ypp file using YamboIn for reading the excitonic weights
         yppew = YamboIn('ypp -e a',filename='ypp.in')
@@ -91,12 +91,15 @@ class YamboBSEAbsorptionSpectra(YamboSaveDB):
                 yppwf["States"] = "%d - %d"%(i,i)
                 yppwf.write("yppwf_%d.in"%i)
 
-                filename = "o-%s.exc_3d_%d.xsf"%(self.job_string,i)
+                filename = "o-%s.exc_%dd_%d%s"%(self.job_string,len(Direction),i,{"g":"","x":".xsf"}(Format) )
                 if not os.path.isfile(filename):
                     os.system("ypp -F yppwf_%d.in -J %s"%(i,self.job_string))
 
                 #read the excitonic wavefunction
-                ewf = YamboExcitonWaveFunction()
+                if Format == 'x':
+                    ewf = YamboExcitonWaveFunctionXSF()
+                else:
+                    ewf = YamboExcitonWaveFunctionGnuplot()
                 ewf.read_file(filename)
                 data = ewf.get_data()
                 for word in keywords:
@@ -113,7 +116,7 @@ class YamboBSEAbsorptionSpectra(YamboSaveDB):
             if not os.path.isfile(filename):
                 os.system("ypp -F yppew_%d.in -J %s"%(i,self.job_string))
 
-            #read the excitonic wavefunction
+            #read the excitonic weigths
             ew = YamboExcitonWeight(filename)
             qpts, weights = ew.calc_kpts_weights(repx=repx,repy=repy,repz=repz)
 

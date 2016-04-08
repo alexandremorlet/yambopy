@@ -19,7 +19,21 @@ def jump_to(f,tag):
 def v2str(v):
     return ("%12.8lf "*len(v))%tuple(v)
 
-class YamboExcitonWaveFunction():
+class YamboExcitonWaveFunctionGnuplot():
+    """ Class to read excitonic wavefunctions from yambo in the 3D xsf format
+    """
+    def __init__(self):
+        self.initialized = False
+
+    def read_file(self,filename):
+        f = open(filename)
+        self.datagrid = np.loadtxt(f)
+        f.close()
+
+    def get_data(self):
+        return { "datagrid": self.datagrid.flatten().tolist() }
+
+class YamboExcitonWaveFunctionXSF():
     """ Class to read excitonic wavefunctions from yambo in the 3D xsf format
     """
     def __init__(self):
