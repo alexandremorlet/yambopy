@@ -31,7 +31,7 @@ class YamboExcitonWaveFunctionGnuplot():
         f.close()
 
     def get_data(self):
-        return { "datagrid": self.datagrid.flatten().tolist() }
+        return { "datagrid": self.datagrid }
 
 class YamboExcitonWaveFunctionXSF():
     """ Class to read excitonic wavefunctions from yambo in the 3D xsf format

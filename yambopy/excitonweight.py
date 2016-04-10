@@ -7,36 +7,13 @@ from yambopy import *
 from yambopy.netcdf import *
 from itertools import product
 
-class YamboExcitonWeight():
+class YamboExcitonWeight(YamboSaveDB):
     def __init__(self,filename,save='SAVE'):
+        #read save database
+        YamboSaveDB.__init__(self,save=save)
+
         #read excitons file
         self.excitons = np.loadtxt(filename)
-
-        #read database
-        self.nc_db    = Dataset('%s/ns.db1'%save)
-        self.sym_car  = self.nc_db.variables['SYMMETRY'][:]
-        self.kpts_iku = self.nc_db.variables['K-POINTS'][:].T
-        self.lat      = self.nc_db.variables['LATTICE_VECTORS'][:].T
-        self.alat     = self.nc_db.variables['LATTICE_PARAMETER'][:].T
-
-        #caclulate the reciprocal lattice
-        self.rlat  = rec_lat(self.lat)
-        self.nsym  = len(self.sym_car)
-
-        #convert form internal yambo units to cartesian lattice units
-        self.kpts_car = np.array([ k/self.alat for k in self.kpts_iku ])
-
-        #convert cartesian transformations to reduced transformations
-        inv = np.linalg.inv
-        self.sym_rlu = np.zeros([self.nsym,3,3])
-        for n,s in enumerate(self.sym_car):
-            a = np.dot(s.T,inv(self.rlat))
-            self.sym_rlu[n] = np.dot(inv(self.lat.T),a)
-
-        #convert cartesian transformations to reciprocal transformations
-        self.sym_rec = np.zeros([self.nsym,3,3])
-        for n,s in enumerate(self.sym_car):
-            self.sym_rec[n] = inv(s).T
 
         self.weights = None
 

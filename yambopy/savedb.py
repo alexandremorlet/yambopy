@@ -78,20 +78,20 @@ class YamboSaveDB():
         """ Take a list of qpoints and symmetry operations and return the full brillouin zone
         with the corresponding index in the irreducible brillouin zone
         """
-        kpoints_indexes = []
-        kpoints_full    = []
+        kpoints_indexes  = []
+        kpoints_full     = []
+        symmetry_indexes = []
 
         #expand using symmetries
         for nk,k in enumerate(self.kpts_car):
             for r in product(repx,repy,repz):
                 d = red_car([r],self.rlat)[0]
-                for sym in self.sym_car:
+                for ns,sym in enumerate(self.sym_car):
                     kpoints_full.append(np.dot(sym,k)+d)
                     kpoints_indexes.append(nk)
+                    symmetry_indexes.append(ns)
 
-        print kpoints_full[:5]
-
-        return np.array(kpoints_full), np.array(kpoints_indexes)
+        return np.array(kpoints_full), np.array(kpoints_indexes), np.array(symmetry_indexes)
 
     def plot_bs(self,size=20,bandc=1,bandv=None,expand=True,repx=range(3),repy=range(3),repz=range(3)):
         """ Plot the weights in a scatter plot of this exciton
@@ -101,8 +101,8 @@ class YamboSaveDB():
         cmap = plt.get_cmap("gist_heat_r")
 
         eigenvalues = self.eigenvalues
-        print "tansitions %d -> %d"%(bandv,bandc+self.nbandsv)
-        weights = (eigenvalues[0,:,self.nbandsv+bandc-1]-eigenvalues[0,:,bandv-1])*ha2ev
+        print "tansitions %d -> %d"%(bandv,bandc)
+        weights = (eigenvalues[0,:,bandc-1]-eigenvalues[0,:,bandv-1])*ha2ev
         print "min:", min(weights)
         print "max:", max(weights)
         weights = weights/max(weights)
@@ -116,8 +116,16 @@ class YamboSaveDB():
         fig = plt.figure(figsize=(10,10))
         plt.rc('text', usetex=True)
         plt.rc('font', family='serif',serif="Computer Modern Roman",size=20)
-        #for r in product(range(3),repeat=3):
-        #        d = red_car([r],self.rlat)[0]
-        plt.scatter(kpts[:,0], kpts[:,1], s=size, marker='H', color=[cmap(c) for c in weights])
+        plt.scatter(kpts[:,0], kpts[:,1], s=size, marker='H', cmap=cmap, lw=0, c=weights)
         plt.axes().set_aspect('equal', 'datalim')
         plt.show()
+
+    def __str__(self):
+        s = ""
+        s += "reciprocal lattice:\n"
+        s += "\n".join([("%12.8lf "*3)%tuple(r) for r in self.rlat])+"\n"
+        s += "lattice:\n"
+        s += "\n".join([("%12.8lf "*3)%tuple(r) for r in self.lat])+"\n"
+        s += "alat:\n"
+        s += ("%12.8lf "*3)%tuple(self.alat)+"\n"
+        return s
